@@ -20,20 +20,6 @@ let chatHistory = [
 ];
 let isProcessing = false;
 
-// Auto-resize textarea as user types
-userInput.addEventListener("input", function () {
-	this.style.height = "auto";
-	this.style.height = this.scrollHeight + "px";
-});
-
-// Send message on Enter (without Shift)
-userInput.addEventListener("keydown", function (e) {
-	if (e.key === "Enter" && !e.shiftKey) {
-		e.preventDefault();
-		sendMessage();
-	}
-});
-
 // Send button click handler
 sendButton.addEventListener("click", sendMessage);
 
@@ -68,7 +54,7 @@ async function sendMessage() {
 		// Create new assistant response element
 		const assistantMessageEl = document.createElement("div");
 		assistantMessageEl.className = "message assistant-message";
-		assistantMessageEl.innerHTML = "<p></p>";
+		assistantMessageEl.innerHTML = "<div class='message-content'><p></p></div>";
 		chatMessages.appendChild(assistantMessageEl);
 		const assistantTextEl = assistantMessageEl.querySelector("p");
 
@@ -201,7 +187,7 @@ async function sendMessage() {
 function addMessageToChat(role, content) {
 	const messageEl = document.createElement("div");
 	messageEl.className = `message ${role}-message`;
-	messageEl.innerHTML = `<p>${content}</p>`;
+	messageEl.innerHTML = `<div class='message-content'><p>${content}</p></div>`;
 	chatMessages.appendChild(messageEl);
 
 	// Scroll to bottom
