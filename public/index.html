@@ -238,6 +238,7 @@
 				display: flex;
 				align-items: center;
 				gap: 0.4rem;
+				font-family: inherit;
 			}
 
 			.control-button:hover {
@@ -246,7 +247,11 @@
 				transform: translateY(-2px);
 			}
 
-			.control-button input[type="file"] {
+			.control-button:active {
+				transform: translateY(0px);
+			}
+
+			.hidden-file-input {
 				display: none;
 			}
 
@@ -295,6 +300,7 @@
 				white-space: nowrap;
 				min-width: 100px;
 				justify-content: center;
+				font-family: inherit;
 			}
 
 			#send-button:hover:not(:disabled) {
@@ -412,13 +418,11 @@
 				<div class="file-preview" id="file-preview"></div>
 				
 				<div class="message-controls">
-					<button class="control-button" id="file-button">
+					<button type="button" class="control-button" id="file-button">
 						📎 Attach File
-						<input type="file" id="file-input" accept=".txt,.pdf,.doc,.docx,.json,.csv" />
 					</button>
-					<button class="control-button" id="image-button">
+					<button type="button" class="control-button" id="image-button">
 						🖼️ Add Image
-						<input type="file" id="image-input" accept="image/*" multiple />
 					</button>
 				</div>
 
@@ -429,7 +433,7 @@
 						rows="1"
 						autofocus
 					></textarea>
-					<button id="send-button">Send</button>
+					<button type="button" id="send-button">Send</button>
 				</div>
 			</div>
 		</div>
@@ -437,6 +441,10 @@
 		<footer>
 			<p>NVIDIA AI Chat Template &copy; 2025 | Powered by Cloudflare Workers AI</p>
 		</footer>
+
+		<!-- Hidden file inputs -->
+		<input type="file" id="file-input" class="hidden-file-input" accept=".txt,.pdf,.doc,.docx,.json,.csv" />
+		<input type="file" id="image-input" class="hidden-file-input" accept="image/*" multiple />
 
 		<!-- Chat app script -->
 		<script src="chat.js"></script>
@@ -449,21 +457,29 @@
 			const filePreview = document.getElementById('file-preview');
 			let attachedFiles = [];
 
-			fileButton.addEventListener('click', () => fileInput.click());
-			imageButton.addEventListener('click', () => imageInput.click());
+			// Add event listeners
+			fileButton.addEventListener('click', function(e) {
+				e.preventDefault();
+				fileInput.click();
+			});
+
+			imageButton.addEventListener('click', function(e) {
+				e.preventDefault();
+				imageInput.click();
+			});
 
 			fileInput.addEventListener('change', (e) => {
 				Array.from(e.target.files).forEach(file => {
 					addAttachment(file, 'file');
 				});
-				e.target.value = '';
+				fileInput.value = '';
 			});
 
 			imageInput.addEventListener('change', (e) => {
 				Array.from(e.target.files).forEach(file => {
 					addAttachment(file, 'image');
 				});
-				e.target.value = '';
+				imageInput.value = '';
 			});
 
 			function addAttachment(file, type) {
