@@ -3,7 +3,18 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="description" content="NVIDIA AI Chat powered by Cloudflare Workers AI with file and image support" />
+		<meta name="theme-color" content="#76b900" />
 		<title>LLM Chat App</title>
+		
+		<!-- Performance Optimization: Preload critical resources -->
+		<link rel="preload" href="chat.js" as="script" />
+		<link rel="dns-prefetch" href="https://www.youtube.com" />
+		
+		<!-- Performance: Lazy loading for external resources -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+		
 		<style>
 			:root {
 				--primary-color: #76b900;
@@ -28,6 +39,10 @@
 				padding: 0;
 			}
 
+			html {
+				scroll-behavior: smooth;
+			}
+
 			body {
 				font-family:
 					-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
@@ -38,6 +53,8 @@
 				max-width: 1000px;
 				margin: 0 auto;
 				padding: 1rem;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
 			}
 
 			header {
@@ -47,6 +64,7 @@
 				border-bottom: 2px solid var(--accent-green);
 				background: linear-gradient(135deg, rgba(118, 185, 0, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
 				border-radius: 8px;
+				will-change: transform;
 			}
 
 			h1 {
@@ -71,7 +89,7 @@
 			.header-info a {
 				color: var(--accent-green);
 				text-decoration: none;
-				transition: color 0.2s;
+				transition: color 0.2s ease;
 			}
 
 			.header-info a:hover {
@@ -89,6 +107,7 @@
 				overflow: hidden;
 				background-color: var(--card-bg);
 				box-shadow: 0 8px 32px rgba(118, 185, 0, 0.1);
+				contain: layout style paint;
 			}
 
 			.chat-messages {
@@ -99,12 +118,14 @@
 				display: flex;
 				flex-direction: column;
 				gap: 1rem;
+				contain: content;
 			}
 
 			.message {
 				display: flex;
 				margin-bottom: 0.5rem;
 				animation: slideIn 0.3s ease-out;
+				will-change: transform, opacity;
 			}
 
 			@keyframes slideIn {
@@ -126,6 +147,7 @@
 				display: flex;
 				flex-direction: column;
 				gap: 0.5rem;
+				contain: content;
 			}
 
 			.message p {
@@ -180,6 +202,7 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
+				flex-shrink: 0;
 			}
 
 			.preview-image {
@@ -193,6 +216,7 @@
 				border-top: 1px solid var(--border-color);
 				background-color: var(--card-bg);
 				padding: 1rem;
+				contain: layout;
 			}
 
 			.file-preview {
@@ -202,6 +226,7 @@
 				margin-bottom: 0.75rem;
 				max-height: 120px;
 				overflow-y: auto;
+				contain: content;
 			}
 
 			.preview-item {
@@ -215,6 +240,7 @@
 				border-radius: 6px;
 				font-size: 0.85rem;
 				color: var(--text-light);
+				flex-shrink: 0;
 			}
 
 			.preview-item img {
@@ -228,7 +254,8 @@
 				color: #ff6b6b;
 				margin-left: 0.5rem;
 				font-weight: bold;
-				transition: color 0.2s;
+				transition: color 0.2s ease;
+				user-select: none;
 			}
 
 			.remove-file:hover {
@@ -250,7 +277,7 @@
 				color: var(--accent-green);
 				border-radius: 6px;
 				cursor: pointer;
-				transition: all 0.2s;
+				transition: all 0.2s ease;
 				font-size: 0.9rem;
 				display: flex;
 				align-items: center;
@@ -289,7 +316,8 @@
 				background-color: var(--light-bg);
 				color: var(--text-color);
 				font-size: 0.95rem;
-				transition: border-color 0.2s;
+				transition: border-color 0.2s ease;
+				contain: layout;
 			}
 
 			#user-input:focus {
@@ -309,7 +337,7 @@
 				border: none;
 				border-radius: 8px;
 				cursor: pointer;
-				transition: all 0.2s;
+				transition: all 0.2s ease;
 				font-weight: 600;
 				display: flex;
 				align-items: center;
@@ -357,6 +385,7 @@
 				border-radius: 50%;
 				background-color: var(--accent-green);
 				animation: typing 1.4s infinite;
+				will-change: opacity;
 			}
 
 			.typing-dot:nth-child(2) {
@@ -402,6 +431,47 @@
 			.chat-messages::-webkit-scrollbar-thumb:hover {
 				background: var(--hover-green);
 			}
+
+			/* Performance: Reduce motion for users who prefer it */
+			@media (prefers-reduced-motion: reduce) {
+				* {
+					animation-duration: 0.01ms !important;
+					animation-iteration-count: 1 !important;
+					transition-duration: 0.01ms !important;
+				}
+			}
+
+			/* Responsive design */
+			@media (max-width: 768px) {
+				body {
+					padding: 0.5rem;
+				}
+
+				h1 {
+					font-size: 1.5rem;
+				}
+
+				.message-content {
+					max-width: 85%;
+				}
+
+				#send-button {
+					min-width: 80px;
+					padding: 0.65rem 1rem;
+				}
+
+				.preview-item img {
+					max-width: 50px;
+					max-height: 50px;
+				}
+			}
+
+			/* Dark mode optimization */
+			@media (prefers-color-scheme: dark) {
+				body {
+					background-color: var(--light-bg);
+				}
+			}
 		</style>
 	</head>
 	<body>
@@ -409,7 +479,7 @@
 			<h1>🚀 NVIDIA AI Chat</h1>
 			<p>Powered by Cloudflare Workers AI</p>
 			<div class="header-info">
-				<p>Created by <strong>Smart</strong> | 📺 <a href="https://www.youtube.com/@NOOR-TYT-2" target="_blank">NOOR-TYT Channel</a></p>
+				<p>Created by <strong>Smart</strong> | 📺 <a href="https://www.youtube.com/@NOOR-TYT-2" target="_blank" rel="noopener noreferrer">NOOR-TYT Channel</a></p>
 			</div>
 		</header>
 
@@ -438,10 +508,10 @@
 				<div class="file-preview" id="file-preview"></div>
 				
 				<div class="message-controls">
-					<button type="button" class="control-button" id="file-button">
+					<button type="button" class="control-button" id="file-button" aria-label="Attach File">
 						📎 Attach File
 					</button>
-					<button type="button" class="control-button" id="image-button">
+					<button type="button" class="control-button" id="image-button" aria-label="Add Image">
 						🖼️ Add Image
 					</button>
 				</div>
@@ -452,8 +522,9 @@
 						placeholder="Type your message here... (Shift+Enter for new line, Enter to send)"
 						rows="1"
 						autofocus
+						aria-label="Message input"
 					></textarea>
-					<button type="button" id="send-button">Send</button>
+					<button type="button" id="send-button" aria-label="Send message">Send</button>
 				</div>
 			</div>
 		</div>
@@ -463,12 +534,25 @@
 		</footer>
 
 		<!-- Hidden file inputs -->
-		<input type="file" id="file-input" class="hidden-file-input" accept=".txt,.pdf,.doc,.docx,.json,.csv" />
-		<input type="file" id="image-input" class="hidden-file-input" accept="image/*" multiple />
+		<input type="file" id="file-input" class="hidden-file-input" accept=".txt,.pdf,.doc,.docx,.json,.csv" aria-hidden="true" />
+		<input type="file" id="image-input" class="hidden-file-input" accept="image/*" multiple aria-hidden="true" />
 
 		<!-- Chat app script -->
-		<script src="chat.js"></script>
-		<script>
+		<script src="chat.js" defer></script>
+		<script defer>
+			// Performance: Debounce function for event handlers
+			function debounce(func, wait) {
+				let timeout;
+				return function executedFunction(...args) {
+					const later = () => {
+						clearTimeout(timeout);
+						func(...args);
+					};
+					clearTimeout(timeout);
+					timeout = setTimeout(later, wait);
+				};
+			}
+
 			// File and image handling
 			const fileButton = document.getElementById('file-button');
 			const imageButton = document.getElementById('image-button');
@@ -515,16 +599,16 @@
 						const url = URL.createObjectURL(att.file);
 						return `
 							<div class="preview-item">
-								<img src="${url}" alt="${att.file.name}" />
+								<img src="${url}" alt="${att.file.name}" loading="lazy" />
 								<span>${att.file.name}</span>
-								<span class="remove-file" onclick="removeAttachment(${att.id})">✕</span>
+								<span class="remove-file" onclick="removeAttachment(${att.id})" role="button" tabindex="0">✕</span>
 							</div>
 						`;
 					} else {
 						return `
 							<div class="preview-item">
 								<span>📄 ${att.file.name}</span>
-								<span class="remove-file" onclick="removeAttachment(${att.id})">✕</span>
+								<span class="remove-file" onclick="removeAttachment(${att.id})" role="button" tabindex="0">✕</span>
 							</div>
 						`;
 					}
@@ -539,12 +623,14 @@
 			// Store attachments globally for use in chat.js
 			window.attachedFiles = attachedFiles;
 			
-			// Auto-resize textarea
+			// Performance: Auto-resize textarea with debounce
 			const userInput = document.getElementById('user-input');
-			userInput.addEventListener('input', function() {
-				this.style.height = 'auto';
-				this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-			});
+			const resizeTextarea = debounce(function() {
+				userInput.style.height = 'auto';
+				userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
+			}, 10);
+
+			userInput.addEventListener('input', resizeTextarea);
 
 			// Handle Shift+Enter for new line, Enter to send
 			userInput.addEventListener('keydown', function(e) {
@@ -553,6 +639,36 @@
 					document.getElementById('send-button').click();
 				}
 			});
+
+			// Performance: Lazy load images
+			if ('IntersectionObserver' in window) {
+				const imageObserver = new IntersectionObserver((entries, observer) => {
+					entries.forEach(entry => {
+						if (entry.isIntersecting) {
+							const img = entry.target;
+							if (img.dataset.src) {
+								img.src = img.dataset.src;
+								img.removeAttribute('data-src');
+								observer.unobserve(img);
+							}
+						}
+					});
+				});
+
+				const lazyImages = document.querySelectorAll('img[data-src]');
+				lazyImages.forEach(img => imageObserver.observe(img));
+			}
+
+			// Performance monitoring
+			if (window.performance && window.performance.timing) {
+				window.addEventListener('load', () => {
+					setTimeout(() => {
+						const perfData = window.performance.timing;
+						const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+						console.log('Page Load Time:', pageLoadTime + 'ms');
+					}, 0);
+				});
+			}
 		</script>
 	</body>
 </html>
